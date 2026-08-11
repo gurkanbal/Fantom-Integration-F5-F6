@@ -56,25 +56,40 @@ Fantom-Integration-F5-F6/
 │       └── fantom5_hg38_mast_cell_gene_counts.tsv        # F5 raw counts (hg38)
 │
 ├── scripts/                           # ── Analysis Scripts ──
-│   ├── run_limma_integration.R        # Main DE analysis (limma-voom, unpaired)
-│   ├── run_extended_analysis.R        # Boxplots, heatmaps, interaction model
+│   ├── run_limma_integration.R        # FsMC vs BsMC (Foreskin / Breast)
+│   ├── run_extended_analysis.R        # Boxplots, heatmaps, interaction
+│   ├── run_limma_integration_BvF.R    # BsMC vs FsMC (Breast / Foreskin) ← REVERSED
+│   ├── run_extended_analysis_BvF.R    # Extended analysis for BvF contrast
+│   ├── run_concordance_plot.R         # Concordance plots (FvB↔BvF & DREAM↔limma)
 │   └── run_dream_analysis.R           # Exploratory mixed-effects (rejected)
 │
-├── results/                           # ── Output Files ──
+├── results/                           # ── FsMC vs BsMC Results ──
 │   ├── DE_FsMC_vs_BsMC.tsv            # Tissue DE table (10,047 genes)
-│   ├── DE_Stimulated_vs_Native.tsv    # Activation DE table (10,047 genes)
-│   ├── DE_Interaction_Tissue_x_State.tsv  # Interaction term results
+│   ├── DE_Stimulated_vs_Native.tsv    # Activation DE table
+│   ├── DE_Interaction_Tissue_x_State.tsv
 │   ├── limma_sampleinfo.tsv           # Final metadata (21 samples)
-│   ├── PCA_batch_corrected.png        # PCA (batch-corrected for visualization)
-│   ├── Volcano_FsMC_vs_BsMC.png       # Volcano plot (tissue contrast)
-│   ├── Heatmap_Top40_Activation_DE.png    # Activation heatmap (top 40 genes)
-│   └── Boxplots_KeyGenes_Panel.png    # Key gene boxplots (12 genes)
+│   ├── PCA_batch_corrected.png
+│   ├── Volcano_FsMC_vs_BsMC.png
+│   ├── Heatmap_Top40_Activation_DE.png
+│   ├── Boxplots_KeyGenes_Panel.png
+│   ├── Concordance_FvB_vs_BvF.png     # Self-concordance (r = −1.000)
+│   └── Concordance_DREAM_vs_Limma_BvF.png  # DREAM vs limma (r = −0.988)
 │
-├── docs/                              # ── Documentation ──
-│   └── integration_logic.md           # Detailed pipeline & design rationale
+├── results/limma_results_BvF/         # ── BsMC vs FsMC Results (REVERSED) ──
+│   ├── DE_BsMC_vs_FsMC.tsv            # Tissue DE table (reversed logFC)
+│   ├── DE_Stimulated_vs_Native.tsv
+│   ├── DE_Interaction_Tissue_x_State.tsv
+│   ├── Volcano_BsMC_vs_FsMC.png
+│   ├── PCA_batch_corrected.png
+│   ├── Heatmap_*.png
+│   ├── Boxplots_KeyGenes_Panel.png
+│   └── Concordance_*.png
 │
-├── Integrative_Analysis_Report_FsMC_vs_BsMC.docx   # Full report
-├── Supplementary_Materials.docx                     # Tables S1–S5, Figures S1–S5
+├── docs/
+│   └── integration_logic.md           # Pipeline & design rationale
+│
+├── Integrative_Analysis_Report_FsMC_vs_BsMC.docx
+├── Supplementary_Materials.docx
 └── README.md
 ```
 
@@ -171,29 +186,36 @@ For step-by-step details with code snippets, see [`docs/integration_logic.md`](d
 
 ## Scripts
 
-### `scripts/run_limma_integration.R` — Main Analysis
+### `scripts/run_limma_integration.R` — FsMC vs BsMC (primary)
 
-The primary analysis script performing the complete pipeline:
-1. Loads F6 raw counts and selects NC-only columns
-2. Maps CAT gene IDs → HGNC symbols
-3. Sums technical replicates per biological sample
-4. Loads F5 hg38-remapped counts
-5. Merges both datasets by HGNC symbol (inner join)
-6. Builds sample metadata (Tissue, State, Dataset, Donor)
-7. Filters low-count genes (`filterByExpr`), applies TMM normalization
-8. Runs limma-voom with `~ Tissue + State + Dataset`
-9. Extracts tissue and activation contrasts
-10. Generates PCA and volcano plots
+The primary analysis script: positive logFC = higher in Foreskin.
+1. Loads F6 raw counts, selects NC-only columns, maps CAT → HGNC, sums tech reps
+2. Merges with F5 hg38 counts (inner join → 10,047 genes)
+3. Runs limma-voom `~ Tissue + State + Dataset` (ref: Breast)
+4. Extracts tissue, activation contrasts; generates PCA + volcano
 
-### `scripts/run_extended_analysis.R` — Extended Visualisation & Interaction
+### `scripts/run_limma_integration_BvF.R` — BsMC vs FsMC (reversed)
+
+Identical pipeline with **reversed reference level**: positive logFC = higher in Breast.
+Only the factor levels change: `Tissue = factor(..., levels=c("Foreskin", "Breast"))`. P-values are identical; logFC signs are mirrored.
+
+### `scripts/run_extended_analysis.R` / `_BvF.R` — Extended Analyses
 
 - Boxplots of 12 key genes (TPSD1, CXCL8, CCL1, RPS4Y1, XIST, GPX1, tryptases, KIT, FCER1G)
 - Heatmaps of top tissue and activation DE genes (pheatmap, Ward's D2 clustering)
 - Tissue × State interaction model (`~ Tissue * State + Dataset`)
 
+### `scripts/run_concordance_plot.R` — Concordance Analysis
+
+Generates two concordance scatter plots:
+1. **Self-concordance** (FsMC-vs-BsMC ↔ BsMC-vs-FsMC): validates that reversing the contrast produces perfectly mirrored logFCs (Pearson r = −1.000)
+2. **Method concordance** (Manuscript DREAM ↔ Integration limma-voom): compares the mixed-effects model from the manuscript to the fixed-effects integration model (Pearson r = −0.988)
+
+Both include labeled key genes, significance categories, and zoomed insets for core MC genes.
+
 ### `scripts/run_dream_analysis.R` — Exploratory (Not Used)
 
-Mixed-effects model with `(1|Donor)` random effect using `variancePartition::dream`. Rejected for final analysis due to loss of power from nested donor structure.
+Mixed-effects model with `(1|Donor)` using `variancePartition::dream`. Rejected due to nested donor structure.
 
 ---
 
@@ -224,11 +246,18 @@ BiocManager::install(c("limma", "edgeR", "variancePartition"))
 # Set your working directory to the cloned repo
 setwd("/path/to/Fantom-Integration-F5-F6")
 
-# 1. Main DE analysis — generates DE tables, PCA, volcano
+# 1. Main DE analysis (FsMC vs BsMC) — DE tables, PCA, volcano
 source("scripts/run_limma_integration.R")
 
 # 2. Extended analyses — boxplots, heatmaps, interaction model
 source("scripts/run_extended_analysis.R")
+
+# 3. Reversed contrast (BsMC vs FsMC) — same analysis, mirrored logFC
+source("scripts/run_limma_integration_BvF.R")
+source("scripts/run_extended_analysis_BvF.R")
+
+# 4. Concordance plots — compare FvB↔BvF and DREAM↔limma
+source("scripts/run_concordance_plot.R")
 ```
 
 > ⚠️ **Note:** The scripts contain hard-coded paths (`setwd()`). Update these to match your local directory structure before running.
