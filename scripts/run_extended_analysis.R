@@ -65,15 +65,15 @@ for (i in seq_len(nrow(meta))) {
   } else {
     meta$Dataset[i] <- "FANTOM5"
     meta$Tissue[i] <- "Breast"
-    if (grepl("stimulated%2c%20donor1", sid)) { meta$Donor[i] <- "F5_D1"; meta$State[i] <- "Stimulated"
-    } else if (grepl("donor1", sid)) { meta$Donor[i] <- "F5_D1"; meta$State[i] <- "Native"
-    } else if (grepl("donor2", sid)) { meta$Donor[i] <- "F5_D2"; meta$State[i] <- "Native"
-    } else if (grepl("donor3", sid)) { meta$Donor[i] <- "F5_D3"; meta$State[i] <- "Native"
-    } else if (grepl("donor4", sid)) { meta$Donor[i] <- "F5_D4"; meta$State[i] <- "Native"
-    } else if (grepl("expanded%20and%20stimulated.*donor5", sid)) { meta$Donor[i] <- "F5_D5"; meta$State[i] <- "Stimulated"
-    } else if (grepl("expanded%20and%20stimulated.*donor8", sid)) { meta$Donor[i] <- "F5_D8"; meta$State[i] <- "Stimulated"
-    } else if (grepl("expanded.*donor5", sid)) { meta$Donor[i] <- "F5_D5"; meta$State[i] <- "Native"
-    } else if (grepl("expanded.*donor8", sid)) { meta$Donor[i] <- "F5_D8"; meta$State[i] <- "Native"
+    if (grepl("stimulated.*donor1", sid, ignore.case=TRUE)) { meta$Donor[i] <- "F5_D1"; meta$State[i] <- "Stimulated"
+    } else if (grepl("donor1", sid, ignore.case=TRUE)) { meta$Donor[i] <- "F5_D1"; meta$State[i] <- "Native"
+    } else if (grepl("donor2", sid, ignore.case=TRUE)) { meta$Donor[i] <- "F5_D2"; meta$State[i] <- "Native"
+    } else if (grepl("donor3", sid, ignore.case=TRUE)) { meta$Donor[i] <- "F5_D3"; meta$State[i] <- "Native"
+    } else if (grepl("donor4", sid, ignore.case=TRUE)) { meta$Donor[i] <- "F5_D4"; meta$State[i] <- "Native"
+    } else if (grepl("expanded.*stimulated.*donor5", sid, ignore.case=TRUE)) { meta$Donor[i] <- "F5_D5"; meta$State[i] <- "Stimulated"
+    } else if (grepl("expanded.*stimulated.*donor8", sid, ignore.case=TRUE)) { meta$Donor[i] <- "F5_D8"; meta$State[i] <- "Stimulated"
+    } else if (grepl("expanded.*donor5", sid, ignore.case=TRUE)) { meta$Donor[i] <- "F5_D5"; meta$State[i] <- "Native"
+    } else if (grepl("expanded.*donor8", sid, ignore.case=TRUE)) { meta$Donor[i] <- "F5_D8"; meta$State[i] <- "Native"
     }
   }
 }
