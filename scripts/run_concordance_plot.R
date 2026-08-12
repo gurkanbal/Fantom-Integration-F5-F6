@@ -1,6 +1,7 @@
 ##############################################################################
 # run_concordance_plot.R
-# Concordance scatter plot: Exported Excel DREAM Data vs limma-voom Integration
+# Concordance scatter plot: Manuscript (DREAM) vs Integration (limma-voom)
+# Exactly matching the publication figure design
 ##############################################################################
 
 library(readxl)
@@ -10,11 +11,12 @@ library(data.table)
 
 setwd("c:/Users/guerkan.bal/OneDrive - Charité - Universitätsmedizin Berlin/DEG_Fantom6")
 
-out_dir_bvf <- "data/fantom5_hg38/limma_results_BvF"
 out_dir_fvb <- "data/fantom5_hg38/limma_results"
+out_dir_bvf <- "data/fantom5_hg38/limma_results_BvF"
+dir.create(out_dir_fvb, showWarnings=FALSE, recursive=TRUE)
 dir.create(out_dir_bvf, showWarnings=FALSE, recursive=TRUE)
 
-# 1. Load Excel exported DREAM data
+# 1. Read Manuscript (DREAM) data from Excel
 excel_file <- "C:/Users/guerkan.bal/OneDrive - Charité - Universitätsmedizin Berlin/Allergy_revision_antigravitiy/Supplement Tables.xlsx"
 
 if (!file.exists(excel_file)) {
@@ -24,114 +26,124 @@ if (!file.exists(excel_file)) {
 dream_df <- as.data.frame(read_excel(excel_file, sheet="S3a DGE_TissueBreast_gene_Dream"))
 dream_df$Gene <- dream_df$HGNC_symbol
 
-# 2. Load limma-voom integration results
-file_bvf <- file.path(out_dir_bvf, "DE_BsMC_vs_FsMC.tsv")
-file_fvb <- file.path(out_dir_fvb, "DE_FsMC_vs_BsMC.tsv")
+# 2. Read Integration (limma-voom) FsMC vs BsMC data
+limma_file <- file.path(out_dir_fvb, "DE_FsMC_vs_BsMC.tsv")
+limma_df <- read.delim(limma_file)
+limma_df$Gene <- rownames(limma_df)
 
-key_genes <- c("TPSD1", "RPS4Y1", "EIF1AY", "XIST", "GPX1", "CLDN23", "C2", "MPDZ", 
-               "KIT", "CPA3", "TPSAB1", "FCER1G", "HDC", "DDX3Y", "KDM5D", "UTY", 
-               "TPSB2", "CCL1", "CXCL8")
+# Merge
+df_all <- merge(dream_df[, c("Gene", "logFC", "adj.P.Val")], 
+                limma_df[, c("Gene", "logFC", "adj.P.Val")], 
+                by="Gene", suffixes=c(".dream", ".limma"))
 
-# -----------------------------------------------------------------------------
-# PLOT 1: BsMC vs FsMC (Both Breast vs Foreskin -> positive slope y = x)
-# -----------------------------------------------------------------------------
-if (file.exists(file_bvf)) {
-  limma_bvf <- read.delim(file_bvf)
-  limma_bvf$Gene <- rownames(limma_bvf)
-  
-  df_bvf <- merge(dream_df[, c("Gene", "logFC", "adj.P.Val")],
-                  limma_bvf[, c("Gene", "logFC", "adj.P.Val")],
-                  by="Gene", suffixes=c(".excel", ".limma"))
-                  
-  df_bvf$sig_excel <- !is.na(df_bvf$adj.P.Val.excel) & df_bvf$adj.P.Val.excel < 0.05
-  df_bvf$sig_limma <- !is.na(df_bvf$adj.P.Val.limma) & df_bvf$adj.P.Val.limma < 0.05
-  
-  df_bvf$category <- "NS in both"
-  df_bvf$category[df_bvf$sig_excel | df_bvf$sig_limma] <- "Sig in ONE"
-  df_bvf$category[df_bvf$sig_excel & df_bvf$sig_limma] <- "Sig in BOTH"
-  df_bvf$category <- factor(df_bvf$category, levels=c("Sig in BOTH", "Sig in ONE", "NS in both"))
-  
-  r_val <- cor(df_bvf$logFC.excel, df_bvf$logFC.limma, method="pearson", use="complete.obs")
-  median_delta <- median(abs(df_bvf$logFC.excel - df_bvf$logFC.limma), na.rm=TRUE)
-  
-  p_main_bvf <- ggplot(df_bvf, aes(x=logFC.excel, y=logFC.limma, color=category)) +
-    geom_point(alpha=0.5, size=1.5) +
-    scale_color_manual(values=c("Sig in BOTH"="#2A76D2", "Sig in ONE"="#ED713A", "NS in both"="#A0A0A0")) +
-    geom_abline(intercept=0, slope=1, linetype="dashed", color="black", linewidth=0.8) +
-    geom_text_repel(data=df_bvf[df_bvf$Gene %in% key_genes, ], aes(label=Gene),
-                    color="black", size=3.8, max.overlaps=Inf, seed=42) +
-    theme_bw(base_size=14) +
-    labs(title="Concordance: Excel Exported DREAM vs Integration (limma-voom)",
-         subtitle=sprintf("Contrast: Breast vs Foreskin (BsMC vs FsMC) | Pearson r = %.3f | Median |Δ log2FC| = %.3f", r_val, median_delta),
-         x="log2FC (DREAM - Excel S3a: Breast / Foreskin)",
-         y="log2FC (limma-voom: Breast / Foreskin)",
-         color="Significance") +
-    theme(legend.position="bottom")
-    
-  p_inset_bvf <- ggplot(df_bvf, aes(x=logFC.excel, y=logFC.limma, color=category)) +
-    geom_point(alpha=0.6, size=1.2) +
-    scale_color_manual(values=c("Sig in BOTH"="#2A76D2", "Sig in ONE"="#ED713A", "NS in both"="#A0A0A0")) +
-    geom_abline(intercept=0, slope=1, linetype="dashed", color="black") +
-    coord_cartesian(xlim=c(-2, 2), ylim=c(-2, 2)) +
-    theme_bw(base_size=10) +
-    theme(legend.position="none", axis.title=element_blank(), panel.background=element_rect(fill="white"))
-    
-  p_final_bvf <- p_main_bvf + annotation_custom(ggplotGrob(p_inset_bvf), xmin=-11, xmax=-2, ymin=2, ymax=11)
-  
-  ggsave(file.path(out_dir_bvf, "Concordance_Excel_vs_Limma_BvF.png"), plot=p_final_bvf, width=9, height=9, dpi=300)
-  ggsave(file.path(out_dir_fvb, "Concordance_Excel_vs_Limma_BvF.png"), plot=p_final_bvf, width=9, height=9, dpi=300)
-  message("Saved Concordance_Excel_vs_Limma_BvF.png")
-}
+# The 23 key genes
+genes_23 <- c("RPS4Y1", "EIF1AY", "DDX3Y", "KDM5D", "MPDZ", "UTY", "TTTY14", "ZFY", "PRKY", "TPSD1", "C2", 
+              "GPX1", "CLDN23", "XIST", "HDC", "TPSB2", "KIT", "CPA3", "FCER1A", "TPSAB1", "EIF1AX", "FCER1G", "TPSG1")
 
-# -----------------------------------------------------------------------------
-# PLOT 2: FsMC vs BsMC (DREAM Breast/Foreskin vs Limma Foreskin/Breast -> slope y = -x)
-# -----------------------------------------------------------------------------
-if (file.exists(file_fvb)) {
-  limma_fvb <- read.delim(file_fvb)
-  limma_fvb$Gene <- rownames(limma_fvb)
-  
-  df_fvb <- merge(dream_df[, c("Gene", "logFC", "adj.P.Val")],
-                  limma_fvb[, c("Gene", "logFC", "adj.P.Val")],
-                  by="Gene", suffixes=c(".excel", ".limma"))
-                  
-  df_fvb$sig_excel <- !is.na(df_fvb$adj.P.Val.excel) & df_fvb$adj.P.Val.excel < 0.05
-  df_fvb$sig_limma <- !is.na(df_fvb$adj.P.Val.limma) & df_fvb$adj.P.Val.limma < 0.05
-  
-  df_fvb$category <- "NS in both"
-  df_fvb$category[df_fvb$sig_excel | df_fvb$sig_limma] <- "Sig in ONE"
-  df_fvb$category[df_fvb$sig_excel & df_fvb$sig_limma] <- "Sig in BOTH"
-  df_fvb$category <- factor(df_fvb$category, levels=c("Sig in BOTH", "Sig in ONE", "NS in both"))
-  
-  r_val <- cor(df_fvb$logFC.excel, df_fvb$logFC.limma, method="pearson", use="complete.obs")
-  median_delta <- median(abs(df_fvb$logFC.excel + df_fvb$logFC.limma), na.rm=TRUE)
-  
-  p_main_fvb <- ggplot(df_fvb, aes(x=logFC.excel, y=logFC.limma, color=category)) +
-    geom_point(alpha=0.5, size=1.5) +
-    scale_color_manual(values=c("Sig in BOTH"="#2A76D2", "Sig in ONE"="#ED713A", "NS in both"="#A0A0A0")) +
-    geom_abline(intercept=0, slope=-1, linetype="dashed", color="black", linewidth=0.8) +
-    geom_text_repel(data=df_fvb[df_fvb$Gene %in% key_genes, ], aes(label=Gene),
-                    color="black", size=3.8, max.overlaps=Inf, seed=42) +
-    theme_bw(base_size=14) +
-    labs(title="Concordance: Excel Exported DREAM vs Integration (limma-voom)",
-         subtitle=sprintf("DREAM (Breast/Foreskin) vs limma-voom (Foreskin/Breast) | Pearson r = %.3f | Median |Δ log2FC| = %.3f", r_val, median_delta),
-         x="log2FC (DREAM - Excel S3a: Breast / Foreskin)",
-         y="log2FC (limma-voom: Foreskin / Breast)",
-         color="Significance") +
-    theme(legend.position="bottom")
-    
-  p_inset_fvb <- ggplot(df_fvb, aes(x=logFC.excel, y=logFC.limma, color=category)) +
-    geom_point(alpha=0.6, size=1.2) +
-    scale_color_manual(values=c("Sig in BOTH"="#2A76D2", "Sig in ONE"="#ED713A", "NS in both"="#A0A0A0")) +
-    geom_abline(intercept=0, slope=-1, linetype="dashed", color="black") +
-    coord_cartesian(xlim=c(-2, 2), ylim=c(-2, 2)) +
-    theme_bw(base_size=10) +
-    theme(legend.position="none", axis.title=element_blank(), panel.background=element_rect(fill="white"))
-    
-  p_final_fvb <- p_main_fvb + annotation_custom(ggplotGrob(p_inset_fvb), xmin=-11, xmax=-2, ymin=-11, ymax=-2)
-  
-  ggsave(file.path(out_dir_fvb, "Concordance_Excel_vs_Limma_FvB.png"), plot=p_final_fvb, width=9, height=9, dpi=300)
-  ggsave(file.path(out_dir_bvf, "Concordance_Excel_vs_Limma_FvB.png"), plot=p_final_fvb, width=9, height=9, dpi=300)
-  message("Saved Concordance_Excel_vs_Limma_FvB.png")
-}
+df <- df_all[df_all$Gene %in% genes_23, ]
 
-message("Excel DREAM vs Limma concordance plots generated successfully!")
+# Classify significance
+df$sig_dream <- df$adj.P.Val.dream < 0.05
+df$sig_limma <- df$adj.P.Val.limma < 0.05
+
+df$category <- "not significant in either"
+df$category[df$sig_dream | df$sig_limma] <- "significant in one only"
+df$category[df$sig_dream & df$sig_limma] <- "significant in both"
+
+df$category <- factor(df$category, levels=c("significant in both", "significant in one only", "not significant in either"))
+
+# Calculate median delta
+median_delta <- median(abs(df$logFC.limma + df$logFC.dream), na.rm=TRUE)
+
+title_str <- "Effect sizes agree closely; significance calls do not always"
+sub_str <- sprintf("median |\u0394 log\u2082FC| = %.2f over 23 genes \u00b7 dashed line = exact mirror agreement", median_delta)
+
+# Colors matching publication figure
+col_sig_both <- "#2A76D2" # blue
+col_sig_one <- "#ED713A"  # orange
+col_sig_none <- "#8D8D8D" # grey
+
+# Prepare inset box coordinates
+box_xmin <- -1.7
+box_xmax <- 1.7
+box_ymin <- -1.7
+box_ymax <- 1.7
+
+# Hide labels inside inset box for main plot
+df$main_label <- df$Gene
+in_box <- df$logFC.dream >= box_xmin & df$logFC.dream <= box_xmax & 
+          df$logFC.limma >= box_ymin & df$logFC.limma <= box_ymax
+df$main_label[in_box] <- ""
+
+# Main plot
+p_main <- ggplot(df, aes(x=logFC.dream, y=logFC.limma, color=category)) +
+  geom_abline(intercept=0, slope=-1, linetype="dashed", color="#8c8c8c", linewidth=0.8) +
+  annotate("rect", xmin=box_xmin, xmax=box_xmax, ymin=box_ymin, ymax=box_ymax, 
+           fill=NA, color="#8c8c8c", linetype="dashed", linewidth=0.6) +
+  annotate("text", x=-7.5, y=-2.5, label="core MC genes + tryptases\n\u2192 see inset", 
+           color="#595959", size=4, hjust=0) +
+  geom_point(size=4) +
+  scale_color_manual(values=c("significant in both"=col_sig_both, 
+                              "significant in one only"=col_sig_one, 
+                              "not significant in either"=col_sig_none)) +
+  geom_text_repel(aes(label=main_label), color="#595959", size=4, 
+                  point.padding=0.3, box.padding=0.4, max.overlaps=Inf,
+                  segment.color="transparent", seed=42, 
+                  min.segment.length=0) +
+  theme_minimal(base_size=14) +
+  labs(title=title_str,
+       subtitle=sub_str,
+       x="Manuscript (DREAM)  log\u2082FC  breast vs foreskin",
+       y="F5-F6 integration (limma-voom)  log\u2082FC  foreskin vs breast") +
+  theme(
+    plot.title = element_text(face="plain", size=16, margin=margin(b=5)),
+    plot.subtitle = element_text(size=14, margin=margin(b=20)),
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    legend.text = element_text(size=12, color="#595959"),
+    axis.title = element_text(color="#595959"),
+    axis.text = element_text(color="#8c8c8c"),
+    panel.grid.major = element_line(color="#f0f0f0"),
+    panel.grid.minor = element_blank(),
+    panel.background = element_rect(fill="white", color=NA),
+    plot.background = element_rect(fill="white", color=NA)
+  ) +
+  scale_x_continuous(limits=c(-11, 11), breaks=seq(-10, 10, by=2.5)) +
+  scale_y_continuous(limits=c(-11, 11), breaks=seq(-10, 10, by=2.5))
+
+# Inset plot
+df_inset <- df[in_box, ]
+
+p_inset <- ggplot(df_inset, aes(x=logFC.dream, y=logFC.limma, color=category)) +
+  geom_abline(intercept=0, slope=-1, linetype="dashed", color="#8c8c8c", linewidth=0.6) +
+  geom_point(size=3) +
+  scale_color_manual(values=c("significant in both"=col_sig_both, 
+                              "significant in one only"=col_sig_one, 
+                              "not significant in either"=col_sig_none)) +
+  geom_text_repel(aes(label=Gene), color="#595959", size=3, max.overlaps=Inf,
+                  point.padding=0.2, box.padding=0.3,
+                  segment.color="transparent", seed=42) +
+  theme_minimal(base_size=10) +
+  coord_cartesian(xlim=c(box_xmin, box_xmax), ylim=c(box_ymin, box_ymax)) +
+  theme(
+    legend.position = "none",
+    axis.title = element_blank(),
+    axis.text = element_text(color="#8c8c8c"),
+    panel.grid.major = element_line(color="#f0f0f0"),
+    panel.grid.minor = element_blank(),
+    panel.border = element_rect(color="#f0f0f0", fill=NA, linewidth=1),
+    panel.background = element_rect(fill="#fafafa", color=NA)
+  )
+
+p_final <- p_main + annotation_custom(ggplotGrob(p_inset), 
+                                      xmin=3, xmax=11, 
+                                      ymin=2, ymax=10)
+
+# Save exact plot to results
+out_file1 <- file.path(out_dir_fvb, "Concordance_Excel_vs_Limma.png")
+out_file2 <- file.path(out_dir_bvf, "Concordance_Excel_vs_Limma.png")
+
+ggsave(out_file1, plot=p_final, width=9, height=9, dpi=300)
+ggsave(out_file2, plot=p_final, width=9, height=9, dpi=300)
+
+message("Concordance plot generated successfully and saved as Concordance_Excel_vs_Limma.png")
