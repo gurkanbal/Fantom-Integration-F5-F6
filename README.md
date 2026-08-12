@@ -14,11 +14,13 @@ This repository contains the **complete, reproducible analysis pipeline** — in
 
 | Finding | Detail |
 |---------|--------|
-| 🧬 **TPSD1 validated** | $\delta$-Tryptase significantly upregulated in FsMC ($\text{log}_2\text{FC} = -3.76, p_{\text{adj}} = 0.002$) |
+| 🧬 **TPSD1 validated** | $\delta$-Tryptase significantly upregulated in FsMC ($\text{log}_2\text{FC} = -3.86, p_{\text{adj}} = 0.0044$) |
 | 📊 **11 tissue DE genes** | $p_{\text{adj}} < 0.05$; 10 sex-linked (Chr Y/X), 1 tissue-specific ($\text{TPSD1}$) |
 | 🔥 **3,456 activation DE genes** | IgE-mediated stimulation response robustly captured across both tissues |
 | 🔄 **0 interaction genes** | Activation response is **tissue-independent** |
-| ✅ **Conserved MC identity** | KIT, CPA3, TPSAB1, TPSB2, FCER1A, FCER1G, HDC — no tissue difference |
+| ✅ **Conserved MC identity** | KIT, CPA3, TPSAB1, TPSB2, FCER1A, FCER1G, HDC — no tissue difference at gene level* |
+
+*\*Note on TPSB2 & TPSG1: While gene-level CAGE integration shows no significant differential expression for TPSB2 ($\text{log}_2\text{FC} = -0.25, p_{\text{adj}} = 1.00$) or TPSG1 ($\text{log}_2\text{FC} = +0.63, p_{\text{adj}} = 1.00$), gene-level aggregation cannot rule out promoter-level isoform switching or Differential Transcript Usage (DTU) between tissue origins, which requires transcript-level CAGE resolution.*
 
 ---
 
@@ -62,16 +64,20 @@ fit <- lmFit(v, design, block = meta$Donor, correlation = corfit$consensus.corre
 ```
 Fantom-Integration-F5-F6/
 │
-├── data/                              # ── Input Data ──
-│   ├── 20220504/                      # F6 raw CAGE counts & sampleinfo
-│   └── fantom5_hg38/                  # F5 raw counts (hg38)
+├── data/                              # ── Raw Count Data & Metadata ──
+│   ├── fantom6/                       # F6 raw CAGE counts & sampleinfo
+│   │   ├── BR1256789_Native_Stimulated_gene_counts.txt
+│   │   ├── BR1256789_Native_Stimulated_sampleinfo.txt
+│   │   └── F6_CAT.gene.info_shorted.tsv
+│   └── fantom5_hg38/                  # F5 raw counts (hg38-remapped)
+│       └── fantom5_hg38_mast_cell_gene_counts.tsv
 │
-├── scripts/                           # ── Canonical Scripts ──
+├── scripts/                           # ── Canonical R Scripts ──
 │   ├── run_limma_integration.R        # Main pipeline (BsMC vs FsMC, N=21 duplicateCorrelation)
 │   ├── run_extended_analysis.R        # Heatmaps, volcano plots, boxplots, interaction
 │   └── run_concordance_plot.R         # Tissue & State publication concordance plots
 │
-├── results/                           # ── Output Results ──
+├── results/                           # ── Statistical Results & Plots ──
 │   ├── DE_BsMC_vs_FsMC.tsv            # Tissue DE table
 │   ├── DE_Stimulated_vs_Native.tsv    # Activation DE table
 │   ├── DE_Interaction_Tissue_x_State.tsv # Interaction DE table
@@ -85,9 +91,10 @@ Fantom-Integration-F5-F6/
 │   └── Concordance_State_Excel_vs_Limma.png  # State effect concordance
 │
 ├── docs/
-│   └── integration_logic.md           # Pipeline & design rationale
+│   └── integration_logic.md           # Pipeline & design rationale + limitations
 │
-├── Integrative_Analysis_Report.md
+├── Supplementary_Methods.docx         # Complete manuscript Word document
+├── supplementary_methods.md           # Markdown version of supplementary methods
 └── README.md
 ```
 
@@ -95,7 +102,7 @@ Fantom-Integration-F5-F6/
 
 ## Reproduction Instructions
 
-To execute the complete analysis from scratch:
+To execute the complete analysis end-to-end:
 
 ```bash
 Rscript scripts/run_limma_integration.R
