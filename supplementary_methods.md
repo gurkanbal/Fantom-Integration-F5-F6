@@ -1,5 +1,5 @@
 
-# Supplementary Materials
+# Supplementary Methods
 
 ## Integrative Transcriptomic Analysis of Breast-derived (BsMC) vs. Foreskin-derived (FsMC) Mast Cells Across FANTOM5 and FANTOM6 CAGE-seq Platforms
 
@@ -141,6 +141,18 @@ No significant interaction genes were detected (0 genes with adj.P < 0.05), conf
 
 ### Figure S7. Publication Concordance: State Effect (Stimulated vs Native)
 ![State Concordance](c:/Users/guerkan.bal/OneDrive - Charité - Universitätsmedizin Berlin/DEG_Fantom6/data/fantom5_hg38/limma_results/Concordance_State_Excel_vs_Limma.png)
+
+---
+
+## Methodological Trade-offs & Limitations
+
+Integrating CAGE-seq datasets across FANTOM5 (HeliScope, 2014) and FANTOM6 (Lenti-CAGE, 2022) introduces two primary analytical trade-offs:
+
+1. **Gene-Level vs. Promoter-Level Isoform Resolution**:
+   CAGE measures transcription start sites at promoter resolution. Because promoter peak definitions differed between FANTOM5 (hg19 remapped) and FANTOM6 (CAT promoter annotation), cross-platform integration required summing counts to gene-level HGNC symbols. Consequently, Differential Transcript Usage (DTU) or alternative promoter switching between tissues cannot be detected in the integrated dataset.
+
+2. **The Dataset Covariate Trade-Off (False Positives vs. False Negatives)**:
+   Because Foreskin samples exist exclusively in FANTOM6, while Breast samples exist in both FANTOM5 and FANTOM6, including `Dataset` as a fixed term (`~ Tissue + State + Dataset`) absorbs platform batch variance. Omitting `Dataset` generates 1,839 false positives driven by technology differences. However, including `Dataset` as a covariate means that some genuine biological variance associated with tissue origin is absorbed by the platform term, creating a conservative risk of **False Negatives**. Thus, the 11 tissue DE genes represent a highly conservative, high-confidence set.
 
 ---
 
