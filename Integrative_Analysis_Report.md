@@ -12,7 +12,16 @@ For both tissues, transcriptomes were captured in two states:
 ### 1.1 Goal
 The primary objective of this integration is to characterize the transcriptional differences between mast cells from different anatomical sites (**Tissue Effect**) and their response to activation (**State Effect**), while robustly controlling for the systematic technical variance between the two datasets (**Batch Effect**).
 
-### 1.2 Model Design
+### 1.2 Sample Cohort (N=21)
+The integrated model utilizes a total of **21 samples** derived from **13 unique donors**. 
+
+To maximize statistical power while accounting for donor-specific baseline variances, the model includes:
+- **8 Paired Donors (16 samples):** Donors with both a Native and a Stimulated sample (FANTOM6: BR5, BR6, BR7, BR8, BR9; FANTOM5: F5_D1, F5_D5, F5_D8).
+- **5 Unpaired Donors (5 samples):** Donors with only a Native baseline sample (FANTOM6: BR1, BR2; FANTOM5: F5_D2, F5_D3, F5_D4).
+
+The `duplicateCorrelation()` function in `limma` was employed to seamlessly integrate both paired and unpaired samples within the same linear model.
+
+### 1.3 Model Design
 We employed the `limma-voom` pipeline to model the expression data using the following design:
 `~ TissueBreast + StateStimulated + DatasetFANTOM5`
 
