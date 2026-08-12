@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document details the complete data integration logic and statistical modeling strategy for combining CAGE-seq mast cell gene expression datasets from two independent consortia projects (**FANTOM5** and **FANTOM6**) into a unified, batch-corrected analysis pipeline.
+This document details the complete data integration logic, statistical modeling strategy, and methodological trade-offs for combining CAGE-seq mast cell gene expression datasets from two independent consortia projects (**FANTOM5** and **FANTOM6**) into a unified, batch-corrected analysis pipeline.
 
 The primary objective is to evaluate tissue-specific transcriptomic differences between **Breast-derived Mast Cells (BsMC)** and **Foreskin-derived Mast Cells (FsMC)** while accounting for activation state (Native vs. IgE-stimulated) and platform batch effects.
 
@@ -89,11 +89,29 @@ To maximize statistical power without violating independence assumptions:
 1. `limma::duplicateCorrelation(v, design, block = meta$Donor)` computes the consensus intra-donor correlation ($\rho \approx 0.433$).
 2. `limma::lmFit()` incorporates this correlation structure into generalized least squares (GLS) estimation.
 
-This approach recovers the full power of a paired analysis for the activation effect (3,456 DE genes) while utilizing all N=21 samples to estimate the baseline tissue effect.
+---
+
+## 4. Methodological Trade-offs & Limitations
+
+Integrating FANTOM5 and FANTOM6 CAGE-seq datasets introduces two fundamental analytical trade-offs that must be explicitly acknowledged:
+
+### 4.1 Gene-Level Aggregation vs. Promoter-Level Isoform Resolution
+- CAGE (Cap Analysis of Gene Expression) naturally measures transcription start sites (TSS) at the promoter level.
+- Because promoter peak definitions differ between FANTOM5 (hg19-remapped robust promoter clusters) and FANTOM6 (CAT promoter annotation), cross-platform integration required aggregating promoter counts to **gene-level HGNC symbols**.
+- **Limitation:** Gene-level aggregation cannot detect **Differential Transcript Usage (DTU)** or alternative promoter switching between tissue origins. True promoter-level tissue differences may be masked if overall gene-level output is similar.
+
+### 4.2 The `Dataset` Covariate Trade-Off: Controlling False Positives vs. Risk of False Negatives
+- **Unbalance in Platform Distribution:**
+  - Foreskin samples exist *exclusively* in FANTOM6 ($N=8$).
+  - Breast samples exist in *both* FANTOM6 ($N=4$) and FANTOM5 ($N=9$).
+- **The Trade-Off:**
+  - **Omitting `Dataset`:** Causes massive technical batch confounding between HeliScope CAGE (2014) and Lenti-CAGE (2022). Without `Dataset`, 1,839 genes appear significantly differentially expressed, over 1,800 of which are **technical false positives** (e.g. `SEC31B`, `SNURF`, `STX16`).
+  - **Including `Dataset`:** Successfully eliminates platform batch noise, yielding an extremely conservative set of **11 tissue DE genes** (10 Y/X sex-linked + `TPSD1`).
+  - **The Cost (Risk of False Negatives):** Because FANTOM5 contains *only* Breast samples, the `Dataset` covariate is partially collinear with `Tissue`. Consequently, including `Dataset` as a fixed term absorbs some variance that could be biological. True tissue-specific genes with moderate effect sizes may be over-corrected, leading to a higher risk of **false negatives**.
 
 ---
 
-## 4. Key Results Summary
+## 5. Key Results Summary
 
 | Contrast | Method | Sig. Genes ($p_{\text{adj}} < 0.05$) | Key Markers |
 |----------|--------|--------------------------------------|-------------|
@@ -103,32 +121,17 @@ This approach recovers the full power of a paired analysis for the activation ef
 
 ---
 
-## 5. Publication Concordance Plots
+## 6. Publication Concordance Plots
 
-To validate the integration results against the independent single-dataset analysis from the manuscript, we performed cross-pipeline concordance analyses against the exported Excel tables (`Supplement Tables.xlsx`).
-
-### 5.1 Tissue Effect Concordance (Breast vs. Foreskin)
+### 6.1 Tissue Effect Concordance (Breast vs. Foreskin)
 ![Tissue Concordance](../results/Concordance_Tissue_Excel_vs_Limma.png)
 
 - **Comparison:** Manuscript DREAM (`Supplement Tables.xlsx`, Sheet `S3a DGE_TissueBreast_gene_Dream`) vs. Integration `limma-voom` (`DE_BsMC_vs_FsMC.tsv`).
 - **Concordance Metric:** Pearson correlation **$r = 0.953$** across 9,869 matched genes.
 - **Median Absolute Difference:** $\text{Median } |\Delta \text{log}_2\text{FC}| = 0.23$ across the 23 key genes.
 
-### 5.2 State Effect Concordance (Stimulated vs. Native)
+### 6.2 State Effect Concordance (Stimulated vs. Native)
 ![State Concordance](../results/Concordance_State_Excel_vs_Limma.png)
 
 - **Comparison:** Manuscript DREAM (`Supplement Tables.xlsx`, Sheet `S2a_Dream_DEG_Sti.vs.base.`) vs. Integration `limma-voom` (`DE_Stimulated_vs_Native.tsv`).
 - **Concordance Metric:** Pearson correlation **$r = 0.892$** across 9,131 matched genes.
-
----
-
-## 6. Batch Correction for Visualization
-
-For PCA and heatmap visualizations, the `Dataset` platform effect is removed using `limma::removeBatchEffect()`:
-
-```r
-expr_corrected <- removeBatchEffect(v$E, batch=meta$Dataset,
-                                     design=model.matrix(~ Tissue + State, data=meta))
-```
-
-*Note: Batch correction via `removeBatchEffect` is used exclusively for plotting. The linear model operates directly on unadjusted logCPM values while treating `Dataset` as a fixed covariate.*
