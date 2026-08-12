@@ -19,6 +19,8 @@ To maximize statistical power while accounting for donor-specific baseline varia
 - **8 Paired Donors (16 samples):** Donors with both a Native and a Stimulated sample (FANTOM6: BR5, BR6, BR7, BR8, BR9; FANTOM5: F5_D1, F5_D5, F5_D8).
 - **5 Unpaired Donors (5 samples):** Donors with only a Native baseline sample (FANTOM6: BR1, BR2; FANTOM5: F5_D2, F5_D3, F5_D4).
 
+The `duplicateCorrelation()` function in `limma` was employed to seamlessly integrate both paired and unpaired samples within the same linear model.
+
 ### 1.3 Model Design
 We employed the `limma-voom` pipeline to model the expression data using the following design:
 `~ TissueBreast + StateStimulated + DatasetFANTOM5`
