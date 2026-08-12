@@ -15,8 +15,8 @@ This repository contains the **complete, reproducible analysis pipeline** — in
 | Finding | Detail |
 |---------|--------|
 | 🧬 **TPSD1 validated** | δ-Tryptase significantly upregulated in FsMC (log₂FC = +3.76, adj.P = 0.002) |
-| 📊 **17 tissue DE genes** | adj.P < 0.05; 12 sex-linked, 5 tissue-specific (incl. TPSD1, GPX1, CLDN23, MPDZ, C2) |
-| 🔥 **2,349 activation DE genes** | IgE-mediated stimulation: 1,224 up / 1,125 down |
+| 📊 **11 tissue DE genes** | adj.P < 0.05; 10 sex-linked, 1 tissue-specific (TPSD1) |
+| 🔥 **3,456 activation DE genes** | IgE-mediated stimulation perfectly captured across both tissues |
 | 🔄 **0 interaction genes** | Activation response is **tissue-independent** |
 | ✅ **Conserved MC identity** | KIT, CPA3, TPSAB1, TPSB2, FCER1A, FCER1G, HDC — no tissue difference |
 
@@ -24,10 +24,11 @@ This repository contains the **complete, reproducible analysis pipeline** — in
 
 ## Statistical Method
 
-**Unpaired, fixed-effects limma-voom** with model:
+**Mixed-design limma-voom** with `duplicateCorrelation` to handle paired donors:
 
 ```r
 design <- model.matrix(~ Tissue + State + Dataset, data = meta)
+corfit <- duplicateCorrelation(v, design, block = meta$Donor)
 ```
 
 | Term | Levels | Role |
@@ -36,9 +37,9 @@ design <- model.matrix(~ Tissue + State + Dataset, data = meta)
 | **State** | Native / Stimulated | Covariate (adjusts for activation) |
 | **Dataset** | FANTOM5 / FANTOM6 | Covariate (adjusts for platform batch) |
 
-### Why unpaired?
+### Why duplicateCorrelation?
 
-Donors are **completely nested within tissue** — no single donor contributes both foreskin and breast tissue. A mixed-effects model with `(1|Donor)` was evaluated but rejected: it cannot reduce variance for the cross-tissue contrast and artificially constrained degrees of freedom (yielding only 14 vs 17 DE genes). See [`docs/integration_logic.md`](docs/integration_logic.md) for the full rationale.
+The dataset is a **mixed design**: 8 donors are paired (Native + Stimulated), while 5 donors are unpaired (Native only). By using `duplicateCorrelation(block=Donor)`, we calculate the intra-donor consensus correlation (r = 0.433) and penalize between-donor variance. This elegantly recovers the high statistical power of a paired design for the State effect (finding >1,000 additional activation genes) while utilizing all 21 samples to robustly estimate the Tissue effect.
 
 ---
 
@@ -133,12 +134,14 @@ FANTOM6 Raw Counts                      FANTOM5 Raw Counts (hg38)
                               │
                     ⑩ voom transformation (limma)
                               │
-                    ⑪ lmFit + eBayes: ~ Tissue + State + Dataset
+                    ⑪ limma::duplicateCorrelation(block=Donor)
+                              │
+                    ⑫ lmFit + eBayes: ~ Tissue + State + Dataset
                               │
                  ┌────────────┼────────────┐
                  ↓            ↓            ↓
            Tissue DE     Activation    Interaction
-           17 genes      2,349 genes   0 genes
+           11 genes      3,456 genes   0 genes
 ```
 
 For step-by-step details with code snippets, see [`docs/integration_logic.md`](docs/integration_logic.md).
