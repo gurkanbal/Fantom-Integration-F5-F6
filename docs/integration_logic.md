@@ -77,8 +77,8 @@ To estimate the tissue-specific expression differences while controlling for act
 $$\text{Expression} \sim \text{Tissue} + \text{State} + \text{Dataset}$$
 
 - **`Tissue`**: Factor with levels `c("Foreskin", "Breast")`. The estimated coefficient `TissueBreast` represents the contrast **Breast-derived Mast Cells vs. Foreskin-derived Mast Cells (BsMC vs. FsMC)**.
-  - Positive $\text{log}_2\text{FC} = \text{higher expression in Breast (BsMC)}$
-  - Negative $\text{log}_2\text{FC} = \text{higher expression in Foreskin (FsMC)}$
+  - Positive log2FC = Higher expression in Breast (BsMC)
+  - Negative log2FC = Higher expression in Foreskin (FsMC)
 - **`State`**: Factor with levels `c("Native", "Stimulated")`. Adjusts for IgE-mediated activation response.
 - **`Dataset`**: Factor with levels `c("FANTOM6", "FANTOM5")`. Adjusts for platform batch effects between HeliScope CAGE and Lenti-CAGE.
 
@@ -113,9 +113,9 @@ Integrating FANTOM5 and FANTOM6 CAGE-seq datasets introduces two fundamental ana
 
 ## 5. Key Results Summary
 
-| Contrast | Method | Sig. Genes ($p_{\text{adj}} < 0.05$) | Key Markers |
+| Contrast | Method | Sig. Genes (adj.P < 0.05) | Key Markers |
 |----------|--------|--------------------------------------|-------------|
-| **Tissue (BsMC vs FsMC)** | `limma-voom` + `dupCor` | **11** | `TPSD1` ($\delta$-tryptase), `RPS4Y1`, `EIF1AY`, `DDX3Y`, `KDM5D`, `UTY`, `XIST` |
+| **Tissue (BsMC vs FsMC)** | `limma-voom` + `dupCor` | **11** | `TPSD1` (δ-tryptase), `RPS4Y1`, `EIF1AY`, `DDX3Y`, `KDM5D`, `UTY`, `XIST` |
 | **Activation (Stimulated vs Native)** | `limma-voom` + `dupCor` | **3,456** | `CCL1`, `CXCL8`, `TNF`, `FOS`, `JUN`, `IL6`, `IL3` |
 | **Interaction (Tissue × State)** | `limma-voom` + `dupCor` | **0** | Activation response is perfectly conserved across tissue origins |
 
@@ -127,11 +127,11 @@ Integrating FANTOM5 and FANTOM6 CAGE-seq datasets introduces two fundamental ana
 ![Tissue Concordance](../results/Concordance_Tissue_Excel_vs_Limma.png)
 
 - **Comparison:** Manuscript DREAM (`Supplement Tables.xlsx`, Sheet `S3a DGE_TissueBreast_gene_Dream`) vs. Integration `limma-voom` (`DE_BsMC_vs_FsMC.tsv`).
-- **Concordance Metric:** Pearson correlation **$r = 0.953$** across 9,869 matched genes.
-- **Median Absolute Difference:** $\text{Median } |\Delta \text{log}_2\text{FC}| = 0.23$ across the 23 key genes.
+- **Concordance Metric:** Pearson correlation **r = 0.953** across 9,869 matched genes.
+- **Median Absolute Difference:** Median |Δ log2FC| = 0.23 across the 23 key genes.
 
 ### 6.2 State Effect Concordance (Stimulated vs. Native)
 ![State Concordance](../results/Concordance_State_Excel_vs_Limma.png)
 
 - **Comparison:** Manuscript DREAM (`Supplement Tables.xlsx`, Sheet `S2a_Dream_DEG_Sti.vs.base.`) vs. Integration `limma-voom` (`DE_Stimulated_vs_Native.tsv`).
-- **Concordance Metric:** Pearson correlation **$r = 0.892$** across 9,131 matched genes.
+- **Concordance Metric:** Pearson correlation **r = 0.892** across 9,131 matched genes.
