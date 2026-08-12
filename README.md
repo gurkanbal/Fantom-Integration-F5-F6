@@ -14,13 +14,13 @@ This repository contains the **complete, reproducible analysis pipeline** — in
 
 | Finding | Detail |
 |---------|--------|
-| 🧬 **TPSD1 validated** | $\delta$-Tryptase significantly upregulated in FsMC ($\text{log}_2\text{FC} = -3.86, p_{\text{adj}} = 0.0044$) |
-| 📊 **11 tissue DE genes** | $p_{\text{adj}} < 0.05$; 10 sex-linked (Chr Y/X), 1 tissue-specific ($\text{TPSD1}$) |
+| 🧬 **TPSD1 validated** | δ-Tryptase significantly upregulated in FsMC (log2FC = -3.86, adj.P = 0.0044) |
+| 📊 **11 tissue DE genes** | adj.P < 0.05; 10 sex-linked (Chr Y/X), 1 tissue-specific (TPSD1) |
 | 🔥 **3,456 activation DE genes** | IgE-mediated stimulation response robustly captured across both tissues |
 | 🔄 **0 interaction genes** | Activation response is **tissue-independent** |
 | ✅ **Conserved MC identity** | KIT, CPA3, TPSAB1, TPSB2, FCER1A, FCER1G, HDC — no tissue difference at gene level* |
 
-*\*Note on TPSB2 & TPSG1: While gene-level CAGE integration shows no significant differential expression for TPSB2 ($\text{log}_2\text{FC} = -0.25, p_{\text{adj}} = 1.00$) or TPSG1 ($\text{log}_2\text{FC} = +0.63, p_{\text{adj}} = 1.00$), gene-level aggregation cannot rule out promoter-level isoform switching or Differential Transcript Usage (DTU) between tissue origins, which requires transcript-level CAGE resolution.*
+*\*Note on TPSB2 & TPSG1: While gene-level CAGE integration shows no significant differential expression for TPSB2 (log2FC = -0.25, adj.P = 1.00) or TPSG1 (log2FC = +0.63, adj.P = 1.00), gene-level aggregation cannot rule out promoter-level isoform switching or Differential Transcript Usage (DTU) between tissue origins, which requires transcript-level CAGE resolution.*
 
 ---
 
@@ -48,14 +48,14 @@ fit <- lmFit(v, design, block = meta$Donor, correlation = corfit$consensus.corre
 ![Tissue Concordance](results/Concordance_Tissue_Excel_vs_Limma.png)
 
 - **Comparison:** Manuscript DREAM (`Supplement Tables.xlsx`, Sheet `S3a DGE_TissueBreast_gene_Dream`) vs. Integration `limma-voom` (`BsMC vs FsMC`).
-- **Pearson Correlation:** $r = 0.953$ across 9,869 matched genes.
-- **Median Absolute Deviation:** $\text{Median } |\Delta \text{log}_2\text{FC}| = 0.23$ over key genes.
+- **Pearson Correlation:** r = 0.953 across 9,869 matched genes.
+- **Median Absolute Deviation:** Median |Δ log2FC| = 0.23 over key genes.
 
 ### 2. State Effect Concordance (Stimulated vs. Native)
 ![State Concordance](results/Concordance_State_Excel_vs_Limma.png)
 
 - **Comparison:** Manuscript DREAM (`Supplement Tables.xlsx`, Sheet `S2a_Dream_DEG_Sti.vs.base.`) vs. Integration `limma-voom` (`DE_Stimulated_vs_Native.tsv`).
-- **Pearson Correlation:** $r = 0.892$ across 9,131 matched genes.
+- **Pearson Correlation:** r = 0.892 across 9,131 matched genes.
 
 ---
 
