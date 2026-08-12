@@ -1,8 +1,8 @@
 ##############################################################################
-# run_limma_integration_BvF.R
+# run_limma_integration.R
 # Integrative BsMC vs FsMC analysis using limma-voom
 # Model: ~ Tissue + State + Dataset
-# F6: NC-only samples, tech reps SUMMED | F5: all samples
+# Uses duplicateCorrelation() to account for paired Native/Stimulated samples
 ##############################################################################
 
 library(data.table)
@@ -11,7 +11,7 @@ library(limma)
 library(ggplot2)
 
 setwd("c:/Users/guerkan.bal/OneDrive - Charité - Universitätsmedizin Berlin/DEG_Fantom6")
-out_dir <- "data/fantom5_hg38/limma_results_BvF"
+out_dir <- "data/fantom5_hg38/limma_results"
 dir.create(out_dir, showWarnings=FALSE, recursive=TRUE)
 
 ###########################################################################
@@ -114,7 +114,7 @@ for (i in seq_len(nrow(meta))) {
 }
 
 # Factorize
-meta$Tissue <- factor(meta$Tissue, levels=c("Foreskin", "Breast"))
+meta$Tissue <- factor(meta$Tissue, levels=c("Breast", "Foreskin"))
 meta$State <- factor(meta$State, levels=c("Native", "Stimulated"))
 meta$Dataset <- factor(meta$Dataset, levels=c("FANTOM6", "FANTOM5"))
 rownames(meta) <- meta$SampleID
@@ -155,12 +155,17 @@ message("Design matrix columns:")
 print(colnames(design))
 
 v <- voom(dge, design, plot=FALSE)
-fit <- lmFit(v, design)
+
+message("Running duplicateCorrelation for paired donors...")
+corfit <- duplicateCorrelation(v, design, block=meta$Donor)
+message(paste("Consensus correlation:", round(corfit$consensus.correlation, 3)))
+
+fit <- lmFit(v, design, block=meta$Donor, correlation=corfit$consensus.correlation)
 fit <- eBayes(fit)
 
-# Tissue contrast (Breast vs Foreskin)
-tt_tissue <- topTable(fit, coef="TissueBreast", number=Inf)
-write.table(tt_tissue, file=file.path(out_dir, "DE_BsMC_vs_FsMC.tsv"),
+# Tissue contrast (Foreskin vs Breast)
+tt_tissue <- topTable(fit, coef="TissueForeskin", number=Inf)
+write.table(tt_tissue, file=file.path(out_dir, "DE_FsMC_vs_BsMC.tsv"),
             sep="\t", quote=FALSE)
 
 n_sig <- sum(tt_tissue$adj.P.Val < 0.05)
@@ -213,20 +218,20 @@ p_volcano <- ggplot(tt_tissue, aes(x=logFC, y=-log10(adj.P.Val), color=sig)) +
   scale_color_manual(values=c("Significant"="#E74C3C", "NS"="grey60")) +
   geom_text(data=top_genes, aes(label=gene), size=3, vjust=-0.8, color="black") +
   theme_bw() +
-  labs(title="Volcano Plot: BsMC vs FsMC (limma-voom)",
+  labs(title="Volcano Plot: FsMC vs BsMC (limma-voom)",
        subtitle="~ Tissue + State + Dataset",
-       x="log2 Fold Change (Breast / Foreskin)",
+       x="log2 Fold Change (Foreskin / Breast)",
        y="-log10(adj. P-Value)") +
   geom_hline(yintercept=-log10(0.05), linetype="dashed", color="grey40") +
   geom_vline(xintercept=c(-1, 1), linetype="dashed", color="grey40") +
   theme(text=element_text(size=13), legend.position="none")
 
-ggsave(file.path(out_dir, "Volcano_BsMC_vs_FsMC.png"), plot=p_volcano, width=9, height=7)
+ggsave(file.path(out_dir, "Volcano_FsMC_vs_BsMC.png"), plot=p_volcano, width=9, height=7)
 
 ###########################################################################
 # 10. KEY GENE CHECK
 ###########################################################################
-message("\n=== KEY GENE RESULTS: Tissue (BsMC vs FsMC) ===")
+message("\n=== KEY GENE RESULTS: Tissue (FsMC vs BsMC) ===")
 key_genes <- c("TPSD1", "CXCL8", "RPS4Y1", "XIST", "CCL1", "KIT",
                "TPSAB1", "TPSB2", "TPSG1", "HDC", "FCER1A", "FCER1G",
                "CMA1", "CPA3", "GPX1")
