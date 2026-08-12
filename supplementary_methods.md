@@ -73,6 +73,8 @@ Expression of canonical mast cell markers showing no significant tissue-dependen
 | HDC | Histidine Decarboxylase | Histamine synthesis | -0.24 | 1.00 | Conserved |
 | CMA1 | Chymase 1 | Serine protease | -1.39 | 0.93 | Conserved |
 
+Note: While gene-level CAGE integration shows no significant differential expression for TPSB2 (log2FC = -0.25, adj.P = 1.00) or TPSG1 (log2FC = +0.63, adj.P = 1.00), gene-level aggregation cannot rule out promoter-level isoform switching or Differential Transcript Usage (DTU) between tissue origins, which requires transcript-level CAGE resolution.
+
 ---
 
 ### Table S4. Top Activation DE Genes (Stimulated vs Native)
@@ -149,7 +151,7 @@ No significant interaction genes were detected (0 genes with adj.P < 0.05), conf
 Integrating CAGE-seq datasets across FANTOM5 (HeliScope, 2014) and FANTOM6 (Lenti-CAGE, 2022) introduces two primary analytical trade-offs:
 
 1. **Gene-Level vs. Promoter-Level Isoform Resolution**:
-   CAGE measures transcription start sites at promoter resolution. Because promoter peak definitions differed between FANTOM5 (hg19 remapped) and FANTOM6 (CAT promoter annotation), cross-platform integration required summing counts to gene-level HGNC symbols. Consequently, Differential Transcript Usage (DTU) or alternative promoter switching between tissues cannot be detected in the integrated dataset.
+   CAGE measures transcription start sites at promoter resolution. Because promoter peak definitions differed between FANTOM5 (hg19 remapped) and FANTOM6 (CAT promoter annotation), cross-platform integration required summing counts to gene-level HGNC symbols. Consequently, Differential Transcript Usage (DTU) or alternative promoter switching between tissues cannot be detected in the integrated dataset. Specifically, for genes like TPSB2 (log2FC = -0.25, adj.P = 1.00) and TPSG1 (log2FC = +0.63, adj.P = 1.00), lack of gene-level significance does not preclude transcript-level or promoter-specific differences.
 
 2. **The Dataset Covariate Trade-Off (False Positives vs. False Negatives)**:
    Because Foreskin samples exist exclusively in FANTOM6, while Breast samples exist in both FANTOM5 and FANTOM6, including `Dataset` as a fixed term (`~ Tissue + State + Dataset`) absorbs platform batch variance. Omitting `Dataset` generates 1,839 false positives driven by technology differences. However, including `Dataset` as a covariate means that some genuine biological variance associated with tissue origin is absorbed by the platform term, creating a conservative risk of **False Negatives**. Thus, the 11 tissue DE genes represent a highly conservative, high-confidence set.
