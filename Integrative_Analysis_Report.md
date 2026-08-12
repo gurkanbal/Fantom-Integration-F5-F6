@@ -12,29 +12,29 @@ The analysis evaluates tissue-specific transcriptomic differences between **Brea
 
 ### 1. Tissue Contrast (BsMC vs. FsMC)
 - **Model:** `~ Tissue + State + Dataset` with `duplicateCorrelation(block=Donor)`
-- **Tissue DE Genes ($p_{\text{adj}} < 0.05$):** **11 genes**
-  - **1 Tissue-Specific Marker:** `TPSD1` ($\delta$-tryptase, $\text{log}_2\text{FC} = -3.86, p_{\text{adj}} = 0.0044$, higher in FsMC)
-  - **10 Sex-Linked Genes:** 9 Y-chromosome genes (`RPS4Y1`, `EIF1AY`, `TXLNGY`, `DDX3Y`, `KDM5D`, `UTY`, `TTTY14`, `ZFY`, `PPIAP29`) higher in male FsMC; 1 X-linked gene (`XIST`, $\text{log}_2\text{FC} = +4.41, p_{\text{adj}} = 0.0167$) higher in female BsMC.
+- **Tissue DE Genes (adj.P < 0.05):** **11 genes**
+  - **1 Tissue-Specific Marker:** `TPSD1` (δ-tryptase, log2FC = -3.86, adj.P = 0.0044, higher in FsMC)
+  - **10 Sex-Linked Genes:** 9 Y-chromosome genes (`RPS4Y1`, `EIF1AY`, `TXLNGY`, `DDX3Y`, `KDM5D`, `UTY`, `TTTY14`, `ZFY`, `PPIAP29`) higher in male FsMC; 1 X-linked gene (`XIST`, (log2FC = +4.41, adj.P = 0.0167) higher in female BsMC.
 
 ### 2. Core Mast Cell Identity Preservation
-Canonical mast cell markers show **no significant tissue-dependent differences** ($p_{\text{adj}} = 1.00$), confirming a conserved core mast cell identity across tissue origins:
-- `KIT` ($\text{log}_2\text{FC} = +0.04, p_{\text{adj}} = 1.00$)
-- `CPA3` ($\text{log}_2\text{FC} = +0.13, p_{\text{adj}} = 1.00$)
-- `TPSAB1` ($\text{log}_2\text{FC} = +0.61, p_{\text{adj}} = 1.00$)
-- `TPSB2` ($\text{log}_2\text{FC} = -0.25, p_{\text{adj}} = 1.00$)*
-- `TPSG1` ($\text{log}_2\text{FC} = +0.63, p_{\text{adj}} = 1.00$)*
-- `FCER1A` ($\text{log}_2\text{FC} = +0.48, p_{\text{adj}} = 1.00$)
-- `FCER1G` ($\text{log}_2\text{FC} = +0.51, p_{\text{adj}} = 1.00$)
-- `HDC` ($\text{log}_2\text{FC} = -0.24, p_{\text{adj}} = 1.00$)
+Canonical mast cell markers show **no significant tissue-dependent differences** (adj.P = 1.00), confirming a conserved core mast cell identity across tissue origins:
+- `KIT` (log2FC = +0.04, adj.P = 1.00)
+- `CPA3` (log2FC = +0.13, adj.P = 1.00)
+- `TPSAB1` (log2FC = +0.61, adj.P = 1.00)
+- `TPSB2` (log2FC = -0.25, adj.P = 1.00)*
+- `TPSG1` (log2FC = +0.63, adj.P = 1.00)*
+- `FCER1A` (log2FC = +0.48, adj.P = 1.00)
+- `FCER1G` (log2FC = +0.51, adj.P = 1.00)
+- `HDC` (log2FC = -0.24, adj.P = 1.00)
 
 *\*Transcript-Level Qualification Note: While gene-level CAGE integration shows no significant differential expression for TPSB2 or TPSG1 at total gene level, gene-level aggregation cannot rule out promoter-level isoform switching or Differential Transcript Usage (DTU) between tissue origins, which requires transcript-level CAGE resolution.*
 
 ### 3. Activation Contrast (Stimulated vs. Native)
-- **Activation DE Genes ($p_{\text{adj}} < 0.05$):** **3,456 genes**
-- **Top Upregulated Markers:** `CCL1` ($\text{log}_2\text{FC} = +10.78$), `CXCL8` ($\text{log}_2\text{FC} = +5.50$), `GZMB` ($\text{log}_2\text{FC} = +8.27$), `IL3` ($\text{log}_2\text{FC} = +8.59$), `TNF`, `FOS`, `JUN`.
+- **Activation DE Genes (adj.P < 0.05):** **3,456 genes**
+- **Top Upregulated Markers:** `CCL1` (log2FC = +10.78), `CXCL8` (log2FC = +5.50), `GZMB` (log2FC = +8.27), `IL3` (log2FC = +8.59), `TNF`, `FOS`, `JUN`.
 
 ### 4. Interaction Analysis (Tissue × State)
-- **Interaction DE Genes ($p_{\text{adj}} < 0.05$):** **0 genes** ($p_{\text{adj}} \approx 0.99$).
+- **Interaction DE Genes (adj.P < 0.05):** **0 genes** (adj.P ≈ 0.99).
 - **Biological Conclusion:** The IgE-mediated activation response is **tissue-independent**.
 
 ---
